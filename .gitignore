@@ -1,0 +1,21 @@
+# Build files
+/*.rbxm
+/*.rbxmx
+/*.rbxl
+/*.rbxlx
+
+# Misc
+sourcemap.json
+wally.lock
+wally.toml
+Packages/
+
+# Profiling
+__pycache__
+profile*
+
+# Time trace
+trace.json
+
+# Code coverage
+coverage.out
