@@ -113,6 +113,64 @@ bench("mt(func): rawget (miss)", function()
 	return sum
 end)
 
+-- self
+local Class = {}
+Class.__index = Class
+
+function Class:get(k)
+	return self[k]
+end
+
+function Class:get_raw(k)
+	return rawget(self, k)
+end
+
+local obj = setmetatable({}, Class)
+
+for i = 1, ITERATIONS do
+	obj[i] = i
+end
+
+bench("\nmethod: self[k] (hit)", function()
+	local sum = 0
+	for i = 1, ITERATIONS do
+		sum = sum + obj:get(i)
+	end
+	return sum
+end)
+
+bench("method: rawget(self,k)", function()
+	local sum = 0
+	for i = 1, ITERATIONS do
+		sum = sum + obj:get_raw(i)
+	end
+	return sum
+end)
+
+local obj_miss = setmetatable({}, Class)
+
+bench("method: self[k] (miss -> __index)", function()
+	local sum = 0
+	for i = 1, ITERATIONS do
+		local v = obj_miss:get(i)
+		if v then
+			sum = sum + v
+		end
+	end
+	return sum
+end)
+
+bench("method: rawget(self,k) miss", function()
+	local sum = 0
+	for i = 1, ITERATIONS do
+		local v = obj_miss:get_raw(i)
+		if v then
+			sum = sum + v
+		end
+	end
+	return sum
+end)
+
 -- Nested access
 local components = {}
 for i = 1, ITERATIONS do
