@@ -1,0 +1,14 @@
+{
+  "tiny-ecs": "https://raw.githubusercontent.com/bakpakin/tiny-ecs/refs/heads/master/tiny.lua",
+  "evolved": "https://raw.githubusercontent.com/BlackMATov/evolved.lua/refs/heads/main/evolved.lua",
+  "rune": {
+    "repo": "https://github.com/jamesstidard/rune",
+    "ref": "main",
+    "config": "configs/rune.lua"
+  },
+  "lovetoys": {
+    "repo": "https://github.com/lovetoys/lovetoys",
+    "ref": "master",
+    "config": "configs/lovetoys.lua"
+  }
+}
