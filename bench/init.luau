@@ -15,26 +15,40 @@ local adapterSpecs = {
 		libraryPath = "./bench/libraries/_empty/",
 	},
 	{
+		adapterPath = "./bench/adapters/concord",
+		libraryPath = "./bench/libraries/concord/",
+	},
+	{
 		adapterPath = "./bench/adapters/rune",
 		libraryPath = "./bench/libraries/rune/",
+	},
+	{
+		adapterPath = "./bench/adapters/alecs",
+		libraryPath = "./bench/libraries/alecs/",
 	},
 	{
 		adapterPath = "./bench/adapters/lovetoys",
 		libraryPath = "./bench/libraries/lovetoys/",
 	},
 	{
-		name = "tiny-ecs-reuse",
 		adapterPath = "./bench/adapters/tiny-ecs-reuse",
 		libraryPath = "./bench/libraries/tiny-ecs/",
 	},
 	{
-		name = "tiny-ecs-no-reuse",
 		adapterPath = "./bench/adapters/tiny-ecs-no-reuse",
 		libraryPath = "./bench/libraries/tiny-ecs/",
 	},
 	{
 		adapterPath = "./bench/adapters/evolved",
 		libraryPath = "./bench/libraries/evolved/",
+	},
+	-- {
+	-- 	adapterPath = "./bench/adapters/ecs-lua",
+	-- 	libraryPath = "./bench/libraries/ecs-lua/",
+	-- },
+	{
+		adapterPath = "./bench/adapters/ecs-lib",
+		libraryPath = "./bench/libraries/ecs-lib/",
 	},
 }
 

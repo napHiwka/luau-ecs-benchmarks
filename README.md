@@ -1,6 +1,6 @@
 # Luau ECS Benchmarks
 
-This repository is dedicated to evaluating and comparing various Entity Component System (ECS) implementations in Luau. Its primary purpose is exploratory: to provide a controlled environment for running benchmarks and observing performance characteristics across different libraries.
+This repository is dedicated to evaluating and comparing various Entity Component System (ECS) implementations in Luau and Lua. Its primary purpose is exploratory: to provide a controlled environment for running benchmarks and observing performance characteristics across different libraries. This project does not include precomputed results, visualizations, or performance summaries. Users are expected to run the benchmarks locally to obtain relevant and current data.
 
 ## Quick Start
 
@@ -14,10 +14,16 @@ luau bench/init.luau
 
 See [`bootstrap/README.md`](bootstrap/README.md) and [`bench/README.md`](bench/README.md) for full details.
 
+### Included libraries
 
-## Scope and Limitations
-
-This project does not include precomputed results, visualizations, or performance summaries. ECS libraries are often under active development, and their performance profiles can change significantly over short periods of time. As a result, any static results would quickly become outdated. Users are expected to run the benchmarks locally to obtain relevant and current data.
+* [concord](https://github.com/Keyslam-Group/Concord)
+* [ecs-lua](https://github.com/nidorx/ecs-lua)
+* [evolved](https://github.com/BlackMATov/evolved.lua)
+* [lovetoys](https://github.com/lovetoys/lovetoys)
+* [rune](https://github.com/jamesstidard/rune)
+* [tiny-ecs](https://github.com/bakpakin/tiny-ecs)
+* [ecs-lib](https://github.com/liuhaopen/ecs.git)
+* [alecs](https://github.com/pcornier/Alecs)
 
 ## Interpretation of Results
 
