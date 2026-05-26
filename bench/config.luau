@@ -14,7 +14,7 @@ return {
 
 	execution = {
 		seed = 1337,
-		runsPerAdapter = 1,
+		runsPerAdapter = 5,
 		includeStressScenarios = true,
 	},
 
