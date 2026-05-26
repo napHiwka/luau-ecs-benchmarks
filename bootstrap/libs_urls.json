@@ -1,4 +1,6 @@
 {
+  "ecr": "https://raw.githubusercontent.com/centau/ecr/refs/heads/main/src/ecr.luau",
+  "jecs": "https://raw.githubusercontent.com/Ukendio/jecs/refs/heads/main/src/jecs.luau",
   "tiny-ecs": "https://raw.githubusercontent.com/bakpakin/tiny-ecs/refs/heads/master/tiny.lua",
   "ecs-lua": "https://raw.githubusercontent.com/nidorx/ecs-lua/refs/heads/master/ECS_concat.lua",
   "evolved": "https://raw.githubusercontent.com/BlackMATov/evolved.lua/refs/heads/main/evolved.lua",

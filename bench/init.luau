@@ -6,6 +6,14 @@ local adapterSpecs = {
 	-- libs are commented out because they take a long time to run
 	-- with the default settings or can'be run in luau without changes.
 	{
+		adapterPath = "../adapters/ecr",
+		libraryPath = "../libraries/ecr",
+	},
+	{
+		adapterPath = "../adapters/jecs",
+		libraryPath = "../libraries/jecs",
+	},
+	{
 		adapterPath = "../adapters/table-based",
 		libraryPath = "../libraries/_empty",
 	},
@@ -37,22 +45,22 @@ local adapterSpecs = {
 		adapterPath = "../adapters/lovetoys",
 		libraryPath = "../libraries/lovetoys/",
 	},
-	{
-		adapterPath = "../adapters/tiny-ecs-no-reuse",
-		libraryPath = "../libraries/tiny-ecs/",
-	},
-	{
-		adapterPath = "../adapters/evolved",
-		libraryPath = "../libraries/evolved/",
-	},
-	{ -- Need manual changes is lib to run correctly; check adapter.
-		adapterPath = "../adapters/ecs-lua",
-		libraryPath = "../libraries/ecs-lua/",
-	},
-	{
-		adapterPath = "../adapters/ecs-lib",
-		libraryPath = "../libraries/ecs-lib/",
-	},
+	-- {
+	-- 	adapterPath = "../adapters/tiny-ecs-no-reuse",
+	-- 	libraryPath = "../libraries/tiny-ecs/",
+	-- },
+	-- {
+	-- 	adapterPath = "../adapters/evolved",
+	-- 	libraryPath = "../libraries/evolved/",
+	-- },
+	-- { -- Need manual changes is lib to run correctly; check adapter.
+	-- 	adapterPath = "../adapters/ecs-lua",
+	-- 	libraryPath = "../libraries/ecs-lua/",
+	-- },
+	-- {
+	-- 	adapterPath = "../adapters/ecs-lib",
+	-- 	libraryPath = "../libraries/ecs-lib/",
+	-- },
 }
 
 local config = Runner.getConfig()
