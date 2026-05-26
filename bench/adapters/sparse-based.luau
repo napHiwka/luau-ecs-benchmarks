@@ -1,7 +1,7 @@
 return function(_)
 	local Adapter = {
 		name = "sparse-based",
-		note = "simple sparse-set ECS using dense/sparse arrays",
+		note = "sparse-set ECS - dense and sparse arrays per component.",
 	}
 
 	function Adapter.createContext()
@@ -70,12 +70,16 @@ return function(_)
 		component.size = last - 1
 	end
 
+	local function getQueryValue(entity, component)
+		local index = component.sparse[entity]
+		if index == nil then
+			return nil
+		end
+		return component.data[index]
+	end
+
 	function Adapter.query(_context, components)
 		local width = #components
-		if width == 0 then
-			return {}
-		end
-
 		local primaryIndex = 1
 		local primary = components[1]
 		for i = 2, width do
@@ -86,24 +90,17 @@ return function(_)
 		end
 
 		local othersSparse = {}
-		local othersData = {}
-		local othersRowPos = {}
 		local othersCount = 0
 		for i = 1, width do
 			if i ~= primaryIndex then
 				othersCount = othersCount + 1
 				othersSparse[othersCount] = components[i].sparse
-				othersData[othersCount] = components[i].data
-				othersRowPos[othersCount] = i + 1
 			end
 		end
 
-		local idxCache = {}
-		local results = {}
+		local entities = {}
 		local count = 0
 		local primaryDense = primary.dense
-		local primaryData = primary.data
-		local primaryRowPos = primaryIndex + 1
 
 		for pos = 1, primary.size do
 			local entity = primaryDense[pos]
@@ -115,21 +112,19 @@ return function(_)
 					ok = false
 					break
 				end
-				idxCache[i] = idx
 			end
 
 			if ok then
 				count = count + 1
-				local row = { entity }
-				row[primaryRowPos] = primaryData[pos]
-				for i = 1, othersCount do
-					row[othersRowPos[i]] = othersData[i][idxCache[i]]
-				end
-				results[count] = row
+				entities[count] = entity
 			end
 		end
 
-		return results
+		return {
+			entities = entities,
+			components = components,
+			get = getQueryValue,
+		}
 	end
 
 	return Adapter

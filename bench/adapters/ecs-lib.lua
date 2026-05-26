@@ -1,4 +1,6 @@
 return function(library)
+	local unpack = table.unpack or unpack
+
 	local Adapter = {
 		name = "ecs-lib",
 		note = "AoS per archetype (chunk[entity][name]) ecs",
@@ -39,21 +41,14 @@ return function(library)
 	end
 
 	function Adapter.query(context, components)
-		local width = #components
-		if width == 0 then
-			return {}
-		end
-
-		local filter = library.all(table.unpack(components))
-
+		local filter = library.all(unpack(components))
 		local results = {}
 		local count = 0
-
 		-- e_data layout: { entity = id, [com_name] = value, ... }
 		context.em:foreach(filter, function(e_data)
 			count = count + 1
 			local row = { e_data.entity }
-			for i = 1, width do
+			for i = 1, #components do
 				row[i + 1] = e_data[components[i]]
 			end
 			results[count] = row

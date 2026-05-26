@@ -1,5 +1,4 @@
 local Compat = require("./compat")
-
 local Stats = {}
 
 local function percentile(sortedValues, fraction)

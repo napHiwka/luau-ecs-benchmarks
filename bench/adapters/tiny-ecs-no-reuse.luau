@@ -1,7 +1,7 @@
 return function(tiny)
 	local Adapter = {
 		name = "tiny-ecs-no-reuse",
-		note = "builds a fresh emulated query system for every query call. This intentionally measures repeated system construction overhead (anti-pattern)",
+		note = "result includes fresh adapter-side emulated query systems for every query call, which is an intentional anti-pattern.",
 	}
 
 	function Adapter.createContext()
@@ -38,6 +38,10 @@ return function(tiny)
 		tiny.addEntity(context.world, entity)
 	end
 
+	function Adapter.sync(context)
+		tiny.refresh(context.world)
+	end
+
 	local function makeSystem(components)
 		return tiny.system({
 			filter = function(_, entity)
@@ -51,24 +55,19 @@ return function(tiny)
 		})
 	end
 
-	function Adapter.query(context, components)
+	local function getSystem(context, components)
 		local system = makeSystem(components)
 		tiny.addSystem(context.world, system)
 		tiny.refresh(context.world)
-		local results = {}
+		return system
+	end
 
-		local entities = system.entities
-
-		for entityIndex = 1, #entities do
-			local entity = entities[entityIndex]
-			local row = { entity }
-			for ci = 1, #components do
-				row[ci + 1] = entity[components[ci]]
-			end
-			results[entityIndex] = row
-		end
-
-		return results
+	function Adapter.query(context, components)
+		local system = getSystem(context, components)
+		return {
+			entities = system.entities,
+			components = components,
+		}
 	end
 
 	return Adapter

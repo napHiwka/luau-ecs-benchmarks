@@ -1,7 +1,7 @@
 return function(_)
 	local Adapter = {
 		name = "hash-based",
-		note = "naive hash ECS using plain Lua tables",
+		note = "hash ECS - each component owns a table keyed by entity id.",
 	}
 
 	function Adapter.createContext()
@@ -52,7 +52,7 @@ return function(_)
 		end
 
 		local width = #components
-		local results = {}
+		local entities = {}
 		local count = 0
 
 		for entity in next, primary.data do
@@ -66,15 +66,17 @@ return function(_)
 
 			if ok then
 				count = count + 1
-				local row = { entity }
-				for i = 1, width do
-					row[i + 1] = components[i].data[entity]
-				end
-				results[count] = row
+				entities[count] = entity
 			end
 		end
 
-		return results
+		return {
+			entities = entities,
+			components = components,
+			get = function(entity, component)
+				return component.data[entity]
+			end,
+		}
 	end
 	return Adapter
 end

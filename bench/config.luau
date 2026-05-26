@@ -1,9 +1,21 @@
 return {
-	seed = 1337,
+	validation = {
+		fingerprintState = false,
+		autoDetectChecksumMismatches = true,
+		checksumRelativeTolerance = 1e-6,
+	},
+
+	output = {
+		showConfig = true,
+		shortConfig = true,
+		showMemoryTable = false,
+		maxDisplayedRuns = 2,
+	},
 
 	execution = {
-		runsPerAdapter = 5,
-		includeStressScenarios = false,
+		seed = 1337,
+		runsPerAdapter = 1,
+		includeStressScenarios = true,
 	},
 
 	garbageCollection = {
@@ -12,30 +24,30 @@ return {
 	},
 
 	dataset = {
-		entitiesPerRun = 700,
-		componentsPerWorld = 20,
-		baseComponentFill = 0.65,
+		entitiesPerRun = 2000,
+		componentsPerWorld = 16,
+		baseComponentFill = 0.55,
 		primaryQueryComponentFill = 0.45,
 		hotComponentFill = 1.0,
 	},
 
 	queryWorkloads = {
-		queryIterations = 500,
-		wideQueryWidth = 9,
-		randomReadCount = 10000,
-		multiQueryCount = 24,
-		workFrameCount = 40,
-		writesPerWorkFrame = 200,
+		queryIterations = 300,
+		wideQueryWidth = 12,
+		randomReadCount = 20000,
+		multiQueryCount = 12,
+		workFrameCount = 60,
+		writesPerWorkFrame = 100,
 	},
 
 	mutationWorkloads = {
-		writesPerPhase = 5000,
-		structuralChangesPerPhase = 5000,
+		writesPerPhase = 20000,
+		structuralChangesPerPhase = 10000,
 	},
 
 	stress = {
-		frameCount = 50,
+		frameCount = 300,
 		writePasses = 50,
-		structuralPasses = 50,
+		structuralPasses = 100,
 	},
 }

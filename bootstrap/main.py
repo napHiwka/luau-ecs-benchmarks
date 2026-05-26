@@ -6,6 +6,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+from typing import Optional
 from urllib.parse import urlparse
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,14 +23,31 @@ VERBOSE_BUNDLER = True
 CLEANUP_RETRIES = 5
 CLEANUP_RETRY_DELAY = 0.5  # seconds
 
+LUA_CANDIDATES = [
+    "luau",
+]
 
-def check_dependencies() -> None:
-    for cmd in ("git", "lua"):
-        if shutil.which(cmd) is None:
-            raise EnvironmentError(
-                f"Required dependency not found in PATH: '{cmd}'. "
-                "Please install it and make sure it is accessible from the terminal."
-            )
+
+def find_lua() -> Optional[str]:
+    for candidate in LUA_CANDIDATES:
+        if shutil.which(candidate) is not None:
+            return candidate
+
+
+def check_dependencies() -> str:
+    if shutil.which("git") is None:
+        raise EnvironmentError(
+            "Required dependency not found in PATH: 'git'. "
+            "Please install it and make sure it is accessible from the terminal."
+        )
+
+    for candidate in LUA_CANDIDATES:
+        if shutil.which(candidate) is not None:
+            return candidate
+
+    raise EnvironmentError(
+        "No Lua interpreter found in PATH. Tried: " + ", ".join(LUA_CANDIDATES)
+    )
 
 
 def download(url: str) -> bytes:
@@ -63,11 +81,13 @@ def _is_commit_hash(ref: str) -> bool:
     return 7 <= len(ref) <= 40 and all(c in "0123456789abcdefABCDEF" for c in ref)
 
 
-def _run_git(*args: str, cwd: str | None = None) -> None:
+def _run_git(*args: str, cwd: Optional[str] = None) -> None:
     result = subprocess.run(
         ["git", *args],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=PROCESS_TIMEOUT,
         cwd=cwd,
     )
@@ -94,7 +114,13 @@ def run_bundler(repo_dir: str, config_path: str, *, verbose: bool = False) -> No
         stderr = ""
     else:
         result = subprocess.run(
-            cmd, cwd=repo_dir, capture_output=True, text=True, timeout=PROCESS_TIMEOUT
+            cmd,
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=PROCESS_TIMEOUT,
         )
         stderr = result.stderr.strip()
     if result.returncode != 0:

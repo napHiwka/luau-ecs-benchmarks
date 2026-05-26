@@ -1,5 +1,4 @@
 local Consumer = require("./consumer")
-
 local Scenarios = {}
 
 local function collectIfConfigured(gcConfig, phase)
@@ -20,12 +19,18 @@ local function spawnEntity(adapter, context, data)
 	if adapter.spawn then
 		return adapter.spawn(context, data)
 	end
-
 	local entity = adapter.createEntity(context)
 	for component, value in pairs(data) do
 		adapter.set(context, entity, component, value)
 	end
 	return entity
+end
+
+local function syncDeferred(adapter, context)
+	local sync = adapter.sync
+	if sync then
+		sync(context)
+	end
 end
 
 local function prepareSpawnData(adapter, spec)
@@ -35,14 +40,14 @@ local function prepareSpawnData(adapter, spec)
 		components[componentIndex] = adapter.allocComponent(context, componentIndex)
 	end
 
-	local makeEntityData = adapter.makeEntityData or defaultMakeEntityData
 	local spawnData = {}
 	for entityIndex = 1, spec.config.dataset.entitiesPerRun do
-		spawnData[entityIndex] = makeEntityData(context, components, spec.blueprints[entityIndex])
+		spawnData[entityIndex] = defaultMakeEntityData(context, components, spec.blueprints[entityIndex])
 	end
 
 	return {
 		adapter = adapter,
+		config = spec.config,
 		context = context,
 		components = components,
 		spawnData = spawnData,
@@ -57,6 +62,7 @@ local function prepareWorld(adapter, spec)
 		entities[entityIndex] = spawnEntity(adapter, state.context, state.spawnData[entityIndex])
 	end
 	state.entities = entities
+	syncDeferred(adapter, state.context)
 	return state
 end
 
@@ -106,6 +112,10 @@ local function fingerprintState(state)
 end
 
 local function finalizeScenario(result, state)
+	if not state.config.validation.fingerprintState then
+		return result
+	end
+
 	local verifyCount, verifySum = fingerprintState(state)
 	result.verifyCount = verifyCount
 	result.verifySum = verifySum
@@ -149,16 +159,14 @@ end
 
 local function runCreateEntities(adapter, spec)
 	local state = prepareSpawnData(adapter, spec)
+	-- finalizeScenario is intentionally omitted here
 	return timeScenario("create_entities", spec.config.garbageCollection, function()
 		local checksum = 0
 		for entityIndex = 1, spec.config.dataset.entitiesPerRun do
-			local entity = spawnEntity(adapter, state.context, state.spawnData[entityIndex])
-			if entity ~= nil then
-				checksum = checksum + entityIndex + 1
-			else
-				checksum = checksum + entityIndex
-			end
+			spawnEntity(adapter, state.context, state.spawnData[entityIndex])
+			checksum = checksum + entityIndex + 1
 		end
+		syncDeferred(adapter, state.context)
 		return checksum
 	end)
 end
@@ -196,6 +204,7 @@ local function runArchetypeTransition(adapter, spec)
 					checksum = checksum + op.value
 				end
 			end
+			syncDeferred(adapter, state.context)
 			return checksum
 		end),
 		state
@@ -268,6 +277,7 @@ local function runWideComponentQuery(adapter, spec)
 		entities[entityIndex] = spawnEntity(adapter, state.context, data)
 	end
 	state.entities = entities
+	syncDeferred(adapter, state.context)
 	local consume = Consumer.detectConsumer(adapter.query(state.context, components), width)
 	return finalizeScenario(
 		timeScenario("query_wide_components", spec.config.garbageCollection, function()
@@ -355,6 +365,7 @@ local function runStressStructuralChurn(adapter, spec)
 						checksum = checksum + value
 					end
 				end
+				syncDeferred(adapter, state.context)
 			end
 			return checksum
 		end),
@@ -370,6 +381,9 @@ local function runStressMixedFrame(adapter, spec)
 	local primaryQuery = resolveComponents(state.components, spec.primaryQueryComponents)
 	local consumeHot = Consumer.detectConsumer(adapter.query(state.context, hotQuery), #hotQuery)
 	local consumePrimary = Consumer.detectConsumer(adapter.query(state.context, primaryQuery), #primaryQuery)
+	-- kinda `mixed frame` workload
+	local DATA_WRITES_PER_FRAME = 200
+	local STRUCTURAL_OPS_PER_FRAME = 120
 	return finalizeScenario(
 		timeScenario("stress_mixed_frame", spec.config.garbageCollection, function()
 			local checksum = 0
@@ -377,15 +391,15 @@ local function runStressMixedFrame(adapter, spec)
 			local structuralCount = #ops
 			for frameIndex = 1, spec.config.stress.frameCount do
 				checksum = checksum + consumePrimary(adapter.query(state.context, primaryQuery))
-				local updateBase = ((frameIndex - 1) * 200) % updateCount
-				for offset = 1, 200 do
+				local updateBase = ((frameIndex - 1) * DATA_WRITES_PER_FRAME) % updateCount
+				for offset = 1, DATA_WRITES_PER_FRAME do
 					local op = updates[((updateBase + offset - 1) % updateCount) + 1]
 					local value = op.value + frameIndex * 0.0001
 					adapter.set(state.context, op.entity, op.component, value)
 					checksum = checksum + value
 				end
-				local structuralBase = ((frameIndex - 1) * 120) % structuralCount
-				for offset = 1, 120 do
+				local structuralBase = ((frameIndex - 1) * STRUCTURAL_OPS_PER_FRAME) % structuralCount
+				for offset = 1, STRUCTURAL_OPS_PER_FRAME do
 					local op = ops[((structuralBase + offset - 1) % structuralCount) + 1]
 					if adapter.has(state.context, op.entity, op.component) then
 						adapter.remove(state.context, op.entity, op.component)
@@ -396,6 +410,7 @@ local function runStressMixedFrame(adapter, spec)
 						checksum = checksum + value
 					end
 				end
+				syncDeferred(adapter, state.context)
 				checksum = checksum + consumeHot(adapter.query(state.context, hotQuery))
 			end
 			return checksum

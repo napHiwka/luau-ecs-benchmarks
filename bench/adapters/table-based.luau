@@ -1,9 +1,7 @@
 return function(_)
 	local Adapter = {
 		name = "table-based",
-		note = "each entity is a plain Lua table. Components are fields on the entity. "
-			.. "query() iterates a flat entity list with linear scan. "
-			.. "Entities with no remaining components are removed from the list via swap-with-last.",
+		note = "table ECS - components are fields on plain Lua entity tables; query uses a linear entity scan.",
 	}
 
 	function Adapter.createContext()
@@ -64,7 +62,7 @@ return function(_)
 	function Adapter.query(context, components)
 		local entities = context.entities
 		local width = #components
-		local results = {}
+		local matched = {}
 		local count = 0
 
 		for i = 1, context.count do
@@ -78,15 +76,14 @@ return function(_)
 			end
 			if ok then
 				count = count + 1
-				local row = { entity }
-				for j = 1, width do
-					row[j + 1] = entity[components[j]]
-				end
-				results[count] = row
+				matched[count] = entity
 			end
 		end
 
-		return results
+		return {
+			entities = matched,
+			components = components,
+		}
 	end
 
 	return Adapter

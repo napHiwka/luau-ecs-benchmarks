@@ -1,6 +1,6 @@
 return function(tiny)
 	local Adapter = {
-		name = "tiny-ecs-reuse",
+		name = "tiny-ecs",
 		note = "tiny-ECS does not provide native ECS queries. The adapter reuses emulated systems",
 	}
 
@@ -39,6 +39,10 @@ return function(tiny)
 		tiny.addEntity(context.world, entity)
 	end
 
+	function Adapter.sync(context)
+		tiny.refresh(context.world)
+	end
+
 	local function makeQueryKey(components)
 		local ids = {}
 		for index = 1, #components do
@@ -73,20 +77,11 @@ return function(tiny)
 	end
 
 	function Adapter.query(context, components)
-		tiny.refresh(context.world)
-		local entities = getSystem(context, components).entities
-		local results = {}
-
-		for entityIndex = 1, #entities do
-			local entity = entities[entityIndex]
-			local row = { entity }
-			for ci = 1, #components do
-				row[ci + 1] = entity[components[ci]]
-			end
-			results[entityIndex] = row
-		end
-
-		return results
+		local system = getSystem(context, components)
+		return {
+			entities = system.entities,
+			components = components,
+		}
 	end
 
 	return Adapter

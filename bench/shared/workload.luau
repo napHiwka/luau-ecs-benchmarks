@@ -1,21 +1,22 @@
 local Config = require("../config")
-
-local RngMethods = {}
-function RngMethods:nextUInt()
-	return math.random(1, 2147483647)
-end
-
-function RngMethods:nextFloat()
-	return math.random()
-end
-
-function RngMethods:nextInt(minValue, maxValue)
-	return math.random(minValue, maxValue)
-end
+local Workload = {}
 
 local function newRng(seed)
-	math.randomseed(math.floor(math.abs(seed)))
-	return RngMethods
+	local state = math.floor(math.abs(seed)) % 2147483646 + 1
+	return {
+		nextUInt = function()
+			state = (state * 48271) % 2147483647
+			return state
+		end,
+		nextFloat = function()
+			state = (state * 48271) % 2147483647
+			return state / 2147483647
+		end,
+		nextInt = function(_, minValue, maxValue)
+			state = (state * 48271) % 2147483647
+			return minValue + (state % (maxValue - minValue + 1))
+		end,
+	}
 end
 
 local function componentFill(config, componentIndex)
@@ -24,7 +25,6 @@ local function componentFill(config, componentIndex)
 	elseif componentIndex <= 3 then
 		return config.dataset.primaryQueryComponentFill
 	end
-
 	return config.dataset.baseComponentFill
 end
 
@@ -75,28 +75,25 @@ local function makeQueryDefinitions(config, rng)
 		local components = {}
 		while #components < width do
 			local componentIndex
+			-- pin the leading component across the first 8 queries to
+			-- guarantee coverage of the primary query components (1-4)
 			if #components == 0 and queryIndex <= 8 then
 				componentIndex = ((queryIndex - 1) % 4) + 1
 			else
 				componentIndex = rng:nextInt(1, componentCount)
 			end
-
 			if not used[componentIndex] then
 				used[componentIndex] = true
 				components[#components + 1] = componentIndex
 			end
 		end
-
 		queryDefinitions[#queryDefinitions + 1] = components
 	end
-
 	return queryDefinitions
 end
 
-local Workload = {}
-
 function Workload.build(config)
-	local rng = newRng(config.seed)
+	local rng = newRng(config.execution.seed)
 
 	local blueprints = {}
 	for entityIndex = 1, config.dataset.entitiesPerRun do
@@ -147,10 +144,6 @@ function Workload.build(config)
 		hotComponent = 1,
 		workQueryDefinitions = makeQueryDefinitions(config, rng),
 	}
-end
-
-function Workload.loadConfig()
-	return Config
 end
 
 return Workload

@@ -1,59 +1,39 @@
 return function(rune)
 	local Adapter = {
 		name = "rune",
-		note = "",
+		note = "component reads and writes bypass the deferred queue to satisfy the benchmark's synchronous read-after-write contract; doesn't have native query - uses linear entities scan.",
 	}
 
-	local function resolveEntity(context, entity)
-		if type(entity) == "table" then
-			return entity
-		end
-		return context.entities[entity]
-	end
-
 	function Adapter.createContext()
-		local world = rune.World()
-		return {
-			world = world,
-			entities = world.entities,
-			next_uid = 0,
-		}
+		return { world = rune.World() }
 	end
 
 	function Adapter.allocComponent(_context, index)
 		return { name = tostring(index) }
 	end
 
+	-- Flushes promised_changes (entity creation/deletion).
+	-- Component mutations bypass the queue so this is only needed
+	-- after createEntity / spawn calls, not after set/remove.
+	function Adapter.sync(context)
+		context.world.update(context.world, 0)
+	end
+
 	function Adapter.createEntity(context)
-		context.next_uid = context.next_uid + 1
-		local uid = context.next_uid
-		context.entities[uid] = { uid = uid }
-		return uid
+		return context.world.add_entity({})
 	end
 
 	function Adapter.spawn(context, data)
-		context.next_uid = context.next_uid + 1
-		local uid = context.next_uid
-
-		local entity = { uid = uid }
+		local components = {}
 		for handle, value in pairs(data) do
-			entity[handle.name] = { name = handle.name, value = value }
+			table.insert(components, { name = handle.name, value = value })
 		end
-
-		context.entities[uid] = entity
-		return uid
+		return context.world.add_entity(components)
 	end
 
-	function Adapter.makeEntityData(_context, components, blueprint)
-		local data = {}
-		for i = 1, #blueprint.components do
-			data[components[blueprint.components[i]]] = blueprint.values[i]
-		end
-		return data
-	end
-
+	-- Direct mutation
 	function Adapter.set(context, entity, component, value)
-		local e = resolveEntity(context, entity)
+		local e = context.world.entities[entity]
 		if not e then
 			return
 		end
@@ -61,7 +41,7 @@ return function(rune)
 	end
 
 	function Adapter.get(context, entity, component)
-		local e = resolveEntity(context, entity)
+		local e = context.world.entities[entity]
 		if not e then
 			return nil
 		end
@@ -70,18 +50,19 @@ return function(rune)
 	end
 
 	function Adapter.has(context, entity, component)
-		local e = resolveEntity(context, entity)
+		local e = context.world.entities[entity]
 		return e ~= nil and e[component.name] ~= nil
 	end
 
 	function Adapter.remove(context, entity, component)
-		local e = resolveEntity(context, entity)
+		local e = context.world.entities[entity]
 		if not e then
 			return
 		end
 		e[component.name] = nil
 	end
 
+	-- Rune has no query API;
 	function Adapter.query(context, components)
 		local width = #components
 		local names = {}
@@ -89,10 +70,10 @@ return function(rune)
 			names[i] = components[i].name
 		end
 
-		local results = {}
+		local matched = {}
 		local count = 0
 
-		for uid, entity in pairs(context.entities) do
+		for _, entity in pairs(context.world.entities) do
 			local ok = true
 			for i = 1, width do
 				if entity[names[i]] == nil then
@@ -100,18 +81,20 @@ return function(rune)
 					break
 				end
 			end
-
 			if ok then
 				count = count + 1
-				local row = { uid }
-				for i = 1, width do
-					row[i + 1] = entity[names[i]].value
-				end
-				results[count] = row
+				matched[count] = entity
 			end
 		end
 
-		return results
+		return {
+			entities = matched,
+			components = components,
+			get = function(entity, component)
+				local c = entity[component.name]
+				return c and c.value or nil
+			end,
+		}
 	end
 
 	return Adapter

@@ -7,7 +7,7 @@ return function(ecs)
 	-- To bench the library, you need to comment out
 	-- or remove these lines from the library's code:
 	--[[
-	 if _G.ECS == nil then
+	if _G.ECS == nil then
 	   _G.ECS = ECS
 	else
 	   local warn = _G.warn or print
@@ -36,14 +36,6 @@ return function(ecs)
 		return context.world:Entity(table.unpack(instances))
 	end
 
-	function Adapter.makeEntityData(_context, components, blueprint)
-		local data = {}
-		for index = 1, #blueprint.components do
-			data[components[blueprint.components[index]]] = blueprint.values[index]
-		end
-		return data
-	end
-
 	function Adapter.set(_context, entity, component, value)
 		entity:Set(component, component({ value = value }))
 	end
@@ -63,23 +55,16 @@ return function(ecs)
 
 	function Adapter.query(context, components)
 		context.world:Update("process", os.clock())
-
 		local q = ecs.Query.All(table.unpack(components))
 		local entities = context.world:Exec(q):ToArray()
-		local width = #components
-		local results = {}
-
-		for i = 1, #entities do
-			local entity = entities[i]
-			local row = { entity }
-			for ci = 1, width do
-				local inst = entity[components[ci]]
-				row[ci + 1] = inst and inst.value
-			end
-			results[i] = row
-		end
-
-		return results
+		return {
+			entities = entities,
+			components = components,
+			get = function(entity, component)
+				local inst = entity[component]
+				return inst and inst.value or nil
+			end,
+		}
 	end
 
 	return Adapter

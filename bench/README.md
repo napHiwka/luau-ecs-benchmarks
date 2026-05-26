@@ -5,23 +5,27 @@ Benchmark harness for comparing Lua ECS libraries.
 ## Run
 
 ```bash
-luau bench/
+luau bench/init.luau
 ```
 
 Results are printed to the console. For each adapter you will see per-run scenario timings, checksums, memory deltas, and aggregated statistics (mean, p50, p90, p95, min, max) across all runs.
 
 ## Configuration
 
-Edit the config table at the `bench/config.luau`. Key options:
+Edit the config table at the `bench/config.lua`. Key options:
 
 | Option | Default | Description |
 |---|---|---|
 | `execution.runsPerAdapter` | — | How many times each adapter is run; results are aggregated |
 | `execution.includeStressScenarios` | — | Toggle stress workloads on or off |
+| `output.showConfig` | — | Toggle the configuration block in console output |
+| `output.maxDisplayedRuns` | — | Maximum per-run samples to print per adapter. When total runs exceed this value, a deterministic random subset is printed and aggregate statistics still use all runs |
 | `garbageCollection.collectBeforeScenario` | — | Force a GC cycle before each scenario |
 | `garbageCollection.collectAfterScenario` | — | Force a GC cycle after each scenario |
+| `validation.fingerprintState` | — | Optional full-world state fingerprint after mutation scenarios; disabled by default |
+| `validation.autoDetectChecksumMismatches` | — | Warn after all adapters finish when one or more adapters produce checksums that differ from a clear majority |
 
-Settings are grouped under: `execution`, `garbageCollection`, `dataset`, `queryWorkloads`, `mutationWorkloads`, `stress`.
+Settings are grouped under: `validation`, `output`, `execution`, `garbageCollection`, `dataset`, `queryWorkloads`, `mutationWorkloads`, `stress`.
 
 ## Workloads
 
@@ -31,9 +35,9 @@ Settings are grouped under: `execution`, `garbageCollection`, `dataset`, `queryW
 - Add/remove structural changes
 - Random component reads
 - 1-, 3-, and wide-component query iteration
-- Work-style scenario: 24 overlapping queries with per-frame writes
+- Work-style scenario: overlapping queries with per-frame writes
 
-**Stress** can be enabled via config; expose pathological cases and theoretical limits, not typical usage.
+**Stress** can be disabled via config; expose pathological cases and theoretical limits, not typical usage.
 
 ## Adding an Adapter
 
@@ -52,9 +56,12 @@ Create a file in `bench/adapters/` that returns a factory function. The function
 | `get(context, entity, component)` | Returns the current numeric value of `component` on `entity` |
 | `has(context, entity, component)` | Returns truthy if `entity` has `component`, falsy otherwise |
 | `remove(context, entity, component)` | Removes `component` from `entity` |
-| `query(context, components)` | Returns matching entities. Accepts two formats (auto-detected on first call): |
-| | **Iterator** — a function returning `entity, v1, v2, ...` per call, `nil` when exhausted |
-| | **Array** — a table of rows `{ entity, v1, v2, ... }` |
+| `query(context, components)` | Returns matching entities. Accepts these formats, auto-detected on first call: |
+| | **Iterator**: a function returning `entity, v1, v2, ...` per call, `nil` when exhausted |
+| | **Array rows**: a table of rows `{ entity, v1, v2, ... }` |
+| | **Entity rows**: `{ entities = matchedEntities, components = components }` for entity tables keyed directly by component handle |
+| | **Getter rows**: `{ entities = matchedEntities, components = components, get = function(entity, component) ... end }` when values need adapter-specific lookup |
+| | **Raw rows**: `{ rows = matchedRows, components = components }` for matched tables keyed directly by component handle |
 
 Component values in `query` results must appear in the same order as the `components` input array.
 
@@ -62,7 +69,7 @@ Component values in `query` results must appear in the same order as the `compon
 
 | Field | Description |
 |---|---|
-| `makeEntityData(context, components, blueprint)` | Converts a blueprint into the data table used by the spawn loop. Override when your library needs a custom representation for bulk creation. Default: `{ [componentHandle] = value, ... }` |
 | `spawn(context, data)` | Creates one entity from a pre-built data table. Override when your library has an efficient batch-creation API. Default: `createEntity` + `set` per component |
+| `sync(context)` | Synchronizes deferred entity membership, component add/remove, or system changes when the ECS requires an explicit commit, refresh, or flush. Do not use it for plain data writes that are visible immediately |
 
 > Keep adapters thin.

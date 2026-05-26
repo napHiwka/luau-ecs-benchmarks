@@ -1,7 +1,7 @@
 return function(library)
 	local Adapter = {
 		name = "lovetoys",
-		note = "",
+		note = "result includes adapter-side overhead for component class construction and component lookup to match the benchmark query API.",
 	}
 
 	library.initialize({ debug = false, globals = false })
@@ -51,16 +51,17 @@ return function(library)
 		entity:remove(component)
 	end
 
+	local function getQueryValue(entity, component)
+		local comp = entity:get(component)
+		return comp and comp.value or nil
+	end
+
 	-- engine:getEntitiesWithComponent returns { [entity.id] = entity }
 	function Adapter.query(context, components)
-		if #components == 0 then
-			return {}
-		end
-
 		local primary = components[1]
 		local candidates = context.engine:getEntitiesWithComponent(primary) or {}
 
-		local out = {}
+		local entities = {}
 		local count = 0
 
 		for _, entity in pairs(candidates) do
@@ -74,16 +75,15 @@ return function(library)
 
 			if allMatch then
 				count = count + 1
-				local row = { entity }
-				for i = 1, #components do
-					local comp = entity:get(components[i])
-					row[i + 1] = comp and comp.value or nil
-				end
-				out[count] = row
+				entities[count] = entity
 			end
 		end
 
-		return out
+		return {
+			entities = entities,
+			components = components,
+			get = getQueryValue,
+		}
 	end
 
 	return Adapter

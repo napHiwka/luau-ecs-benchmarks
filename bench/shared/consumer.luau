@@ -2,17 +2,25 @@ local Compat = require("./compat")
 
 local Consumer = {}
 
+local function valueAt(row, index)
+	local values = row.values
+	if values then
+		return values[index]
+	end
+	return row[index + 1]
+end
+
 local function packedRowChecksum(row, width)
 	if width == 1 then
-		return row[2] * 0.02
+		return valueAt(row, 1) * 0.02
 	elseif width == 2 then
-		return row[2] * 0.02 + row[3] * 0.03
+		return valueAt(row, 1) * 0.02 + valueAt(row, 2) * 0.03
 	elseif width == 3 then
-		return row[2] * 0.02 + row[3] * 0.03 + row[4] * 0.04
+		return valueAt(row, 1) * 0.02 + valueAt(row, 2) * 0.03 + valueAt(row, 3) * 0.04
 	else
 		local sum = 0
-		for i = 2, row.n do
-			sum = sum + row[i] * (0.01 * i)
+		for i = 1, width do
+			sum = sum + valueAt(row, i) * (0.01 * (i + 1))
 		end
 		return sum
 	end
@@ -24,12 +32,12 @@ local function consumeArray(results, width)
 		local row = results[rowIndex]
 		if row and type(row) == "table" then
 			if width == 1 then
-				local a = row[2]
+				local a = valueAt(row, 1)
 				if a then
 					checksum = checksum + a * 0.02
 				end
 			elseif width == 2 then
-				local a, b = row[2], row[3]
+				local a, b = valueAt(row, 1), valueAt(row, 2)
 				if a then
 					checksum = checksum + a * 0.02
 				end
@@ -37,7 +45,7 @@ local function consumeArray(results, width)
 					checksum = checksum + b * 0.03
 				end
 			elseif width == 3 then
-				local a, b, c = row[2], row[3], row[4]
+				local a, b, c = valueAt(row, 1), valueAt(row, 2), valueAt(row, 3)
 				if a then
 					checksum = checksum + a * 0.02
 				end
@@ -49,7 +57,7 @@ local function consumeArray(results, width)
 				end
 			else
 				for componentIndex = 1, width do
-					local value = row[componentIndex + 1]
+					local value = valueAt(row, componentIndex)
 					if value then
 						checksum = checksum + value * (0.01 * (componentIndex + 1))
 					end
@@ -113,6 +121,56 @@ function Consumer.detectConsumer(probeResult, width)
 			return packedRowChecksum(firstRow, width) + consumeIterator(queryResult, width)
 		end
 	elseif probeType == "table" then
+		if probeResult.entities and probeResult.get then
+			return function(queryResult)
+				local checksum = 0
+				local entities = queryResult.entities
+				local components = queryResult.components
+				local get = queryResult.get
+				for rowIndex = 1, queryResult.count or #entities do
+					local entity = entities[rowIndex]
+					for componentIndex = 1, width do
+						local value = get(entity, components[componentIndex])
+						if value then
+							checksum = checksum + value * (0.01 * (componentIndex + 1))
+						end
+					end
+				end
+				return checksum
+			end
+		elseif probeResult.entities and probeResult.components then
+			return function(queryResult)
+				local checksum = 0
+				local entities = queryResult.entities
+				local components = queryResult.components
+				for rowIndex = 1, queryResult.count or #entities do
+					local entity = entities[rowIndex]
+					for componentIndex = 1, width do
+						local value = entity[components[componentIndex]]
+						if value then
+							checksum = checksum + value * (0.01 * (componentIndex + 1))
+						end
+					end
+				end
+				return checksum
+			end
+		elseif probeResult.rows and probeResult.components then
+			return function(queryResult)
+				local checksum = 0
+				local rows = queryResult.rows
+				local components = queryResult.components
+				for rowIndex = 1, queryResult.count or #rows do
+					local row = rows[rowIndex]
+					for componentIndex = 1, width do
+						local value = row[components[componentIndex]]
+						if value then
+							checksum = checksum + value * (0.01 * (componentIndex + 1))
+						end
+					end
+				end
+				return checksum
+			end
+		end
 		return function(queryResult)
 			return consumeArray(queryResult, width)
 		end

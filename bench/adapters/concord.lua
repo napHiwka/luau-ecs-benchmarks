@@ -1,11 +1,14 @@
 return function(Concord)
 	local Adapter = {
 		name = "concord",
-		note = "",
+		note = "uses cached systems",
 	}
 
-	-- Concord.component errors on duplicate names. Track registrations at
-	-- module level so createContext can be called multiple times safely
+	function Adapter.sync(context)
+		context.world:__flush()
+	end
+
+	-- Concord.component errors on duplicate names
 	local registered = {}
 
 	function Adapter.createContext()
@@ -16,7 +19,7 @@ return function(Concord)
 	end
 
 	function Adapter.allocComponent(_context, index)
-		local name = "c" .. index
+		local name = "c" .. index -- need string
 		if not registered[name] then
 			Concord.component(name, function(c, v)
 				c.value = v
@@ -30,54 +33,40 @@ return function(Concord)
 		return Concord.entity(context.world)
 	end
 
-	function Adapter.set(_context, ent, comp, value)
-		ent:give(comp, value)
+	function Adapter.set(_context, entity, component, value)
+		entity:give(component, value)
 	end
 
-	function Adapter.get(_context, ent, comp)
-		local c = ent[comp]
+	function Adapter.get(_context, entity, component)
+		local c = entity[component]
 		return c and c.value or nil
 	end
 
-	function Adapter.has(_context, ent, comp)
-		return ent[comp] ~= nil
+	function Adapter.has(_context, entity, component)
+		return entity[component] ~= nil
 	end
 
-	function Adapter.remove(_context, ent, comp)
-		ent:remove(comp)
+	function Adapter.remove(_context, entity, component)
+		entity:remove(component)
 	end
 
 	function Adapter.query(context, components)
-		-- Drain __added / __removed / __dirty queues so system pools reflect
-		-- the current state of the world. Without this, pools stay empty
-		-- because World:addEntity only writes to __added, and give() only
-		-- writes to __dirty; both are resolved inside __flush()
-		context.world:__flush()
-
-		local key = table.concat(components, ",")
+		local key = table.concat(components, "|")
 		if not context.systems[key] then
 			local SystemClass = Concord.system({ pool = components })
 			context.world:addSystem(SystemClass)
 			context.systems[key] = SystemClass
-			-- Adding a system after entities already exist requires a second
-			-- flush so the new system's pool gets populated immediately
-			context.world:__flush()
 		end
+		local system = context.world:getSystem(context.systems[key])
 
-		local sys = context.world:getSystem(context.systems[key])
-		local out = {}
-		local count = 0
-		for i = 1, sys.pool.size do
-			local ent = sys.pool[i]
-			count = count + 1
-			local row = { ent }
-			for j = 1, #components do
-				local c = ent[components[j]]
-				row[j + 1] = c and c.value or nil
-			end
-			out[count] = row
-		end
-		return out
+		return {
+			entities = system.pool,
+			components = components,
+			get = function(entity, component)
+				local c = entity[component]
+				return c and c.value or nil
+			end,
+		}
 	end
 
 	return Adapter

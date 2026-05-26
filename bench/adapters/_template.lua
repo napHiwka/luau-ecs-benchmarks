@@ -12,14 +12,6 @@ return function(library)
 
 	function Adapter.allocComponent(context, index) end
 
-	-- Optional: implement if your library has an efficient batch-creation API
-	-- If omitted, the harness calls createEntity + set for each component
-	-- function Adapter.spawn(context, data) end
-
-	-- Optional: override if your library needs a different data layout
-	-- than { [componentHandle] = value }.
-	-- function Adapter.makeEntityData(context, components, blueprint) end
-
 	function Adapter.set(context, entity, component, value) end
 
 	function Adapter.get(context, entity, component) end
@@ -29,10 +21,19 @@ return function(library)
 	function Adapter.remove(context, entity, component) end
 
 	-- Must return one of:
-	--
 	-- Iterator: function() -> entity, v1, v2, ...  (nil when exhausted)
-	-- Array:    { { entity, v1, v2, ... }, ... }
+	-- Array: { { entity, v1, v2, ... }, ... }
+	-- Entity rows: { entities = matchedEntities, components = components }
+	-- Getter rows: { entities = matchedEntities, components = components, get = function(entity, component) ... end }
+	-- Raw rows: { rows = matchedRows, components = components }
 	function Adapter.query(context, components) end
+
+	-- Optional: implement if your library has an efficient batch-creation API
+	-- If omitted, the harness calls createEntity + set for each component
+	-- function Adapter.spawn(context, data) end
+
+	-- Optional: implement if your library needs the deferred sync changes on adding & removing components.
+	-- function Adapter.sync(context) end
 
 	return Adapter
 end

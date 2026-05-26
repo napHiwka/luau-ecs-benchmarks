@@ -61,6 +61,7 @@ return function(evo)
 			:build()
 
 		evo.process_with(stage, 0)
+
 		evo.destroy(sys)
 		evo.destroy(stage)
 

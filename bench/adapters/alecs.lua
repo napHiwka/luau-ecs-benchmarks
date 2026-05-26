@@ -1,11 +1,7 @@
 return function(library)
 	local Adapter = {
 		name = "alecs",
-		note = "entities are plain Lua tables; components are fields. "
-			.. "query uses alecs:filter() which is a full linear scan via pairs(entities). "
-			.. "removing a component does not remove the entity from the scan -- "
-			.. "stale entities continue to participate in query iterations. "
-			.. "removeEntity() nils the slot, leaving a sparse table for pairs().",
+		note = "result includes adapter-side conversion from alecs:filter() entity lists into benchmark result rows.",
 	}
 
 	function Adapter.createContext()
@@ -44,28 +40,10 @@ return function(library)
 	end
 
 	function Adapter.query(context, components)
-		local width = #components
-		if width == 0 then
-			return {}
-		end
-
-		-- alecs:filter expects an array of component name strings
-		-- and returns matching entity tables
-		local matched = context.world:filter(components)
-
-		local results = {}
-		local count = 0
-		for i = 1, #matched do
-			local entity = matched[i]
-			count = count + 1
-			local row = { entity }
-			for j = 1, width do
-				row[j + 1] = entity[components[j]]
-			end
-			results[count] = row
-		end
-
-		return results
+		return {
+			rows = context.world:filter(components),
+			components = components,
+		}
 	end
 
 	return Adapter
