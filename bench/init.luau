@@ -53,7 +53,7 @@ local adapterSpecs = {
 	-- 	adapterPath = "../adapters/evolved",
 	-- 	libraryPath = "../libraries/evolved/",
 	-- },
-	-- { -- Need manual changes is lib to run correctly; check adapter.
+	-- { -- Needs manual changes in lib to run correctly; check adapter.
 	-- 	adapterPath = "../adapters/ecs-lua",
 	-- 	libraryPath = "../libraries/ecs-lua/",
 	-- },
