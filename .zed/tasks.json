@@ -2,7 +2,7 @@
   {
     "label": "Run Benchmark",
     "command": "luau",
-    "args": ["bench/"],
+    "args": ["bench/init.luau"],
     "allow_concurrent_runs": true,
   },
   {
