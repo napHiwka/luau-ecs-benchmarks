@@ -6,7 +6,7 @@ Prepares the benchmark environment by downloading and bundling all third-party L
 
 - Python 3.8+
 - `git` available in PATH
-- `lua` available in PATH
+- `luau` available in PATH
 
 ## Usage
 

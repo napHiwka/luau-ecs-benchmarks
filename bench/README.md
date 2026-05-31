@@ -20,12 +20,8 @@ Edit the config table at the `bench/config.lua`. Key options:
 | `execution.includeStressScenarios` | — | Toggle stress workloads on or off |
 | `output.showConfig` | — | Toggle the configuration block in console output |
 | `output.maxDisplayedRuns` | — | Maximum per-run samples to print per adapter. When total runs exceed this value, a deterministic random subset is printed and aggregate statistics still use all runs |
-| `garbageCollection.collectBeforeScenario` | — | Force a GC cycle before each scenario |
-| `garbageCollection.collectAfterScenario` | — | Force a GC cycle after each scenario |
 | `validation.fingerprintState` | — | Optional full-world state fingerprint after mutation scenarios; disabled by default |
 | `validation.autoDetectChecksumMismatches` | — | Warn after all adapters finish when one or more adapters produce checksums that differ from a clear majority |
-
-Settings are grouped under: `validation`, `output`, `execution`, `garbageCollection`, `dataset`, `queryWorkloads`, `mutationWorkloads`, `stress`.
 
 ## Workloads
 

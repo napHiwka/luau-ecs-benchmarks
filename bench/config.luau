@@ -18,6 +18,7 @@ return {
 		includeStressScenarios = true,
 	},
 
+	-- Will not work in luau, retained to maintain overall compat. with lua repo
 	garbageCollection = {
 		collectBeforeScenario = true,
 		collectAfterScenario = true,
