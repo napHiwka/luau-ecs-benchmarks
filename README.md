@@ -6,6 +6,9 @@ If you need a benchmark that supports LuaJIT libs, here's the [link](https://git
 
 ## Quick Start
 
+> [!NOTE]
+> It’s worth noting that Luau includes the `--codegen` and `-O2` optimization flags, which can significantly alter test results.
+
 ```bash
 # 1. Download libraries
 python bootstrap/main.py

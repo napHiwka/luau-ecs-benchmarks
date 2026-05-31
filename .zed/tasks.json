@@ -6,6 +6,18 @@
     "allow_concurrent_runs": true,
   },
   {
+    "label": "Run Benchmark Optimized",
+    "command": "luau",
+    "args": ["bench/init.luau -O2"],
+    "allow_concurrent_runs": true,
+  },
+  {
+    "label": "Run Benchmark Codegen",
+    "command": "luau",
+    "args": ["bench/init.luau -O2 --codegen"],
+    "allow_concurrent_runs": true,
+  },
+  {
     "label": "Update Libs",
     "command": "python",
     "args": ["bootstrap/main.py"],
