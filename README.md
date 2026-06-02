@@ -1,6 +1,6 @@
 # Lua ECS Benchmarks
 
-This repository is dedicated to evaluating and comparing various Entity Component System (ECS) implementations in Lua/LuaJIT. Its primary purpose is exploratory: to provide a controlled environment for running benchmarks and observing performance characteristics across different libraries. This project does not include precomputed results, visualizations, or performance summaries. Users are expected to run the benchmarks locally to obtain relevant and current data.
+This repository is dedicated to evaluating and comparing various Entity Component System (ECS) implementations in Luau. Its primary purpose is exploratory: to provide a controlled environment for running benchmarks and observing performance characteristics across different libraries. This project does not include precomputed results, visualizations, or performance summaries. Users are expected to run the benchmarks locally to obtain relevant and current data.
 
 If you need a benchmark that supports LuaJIT libs, here's the [link](https://github.com/napHiwka/lua-ecs-benchmarks).
 
